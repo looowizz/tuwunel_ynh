@@ -82,6 +82,7 @@ then
         # If user disables calls, remove livekit nginx config
         if [-e "/etc/nginx/conf.d/${domain}.d/${app}_livekit.conf" ]; then
             ynh_safe_rm "/etc/nginx/conf.d/${domain}.d/${app}_livekit.conf"
+        fi
         ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
     fi
 fi
