@@ -75,8 +75,8 @@ if [ $calls_enabled -eq 1 ]; then
     yunohost service add "$app"-lk-jwt --description 'RTC Livekit JWT service for element call.'
 
     get_lk_node_ip
-    ynh_config_add_systemd --service="$app"-livekit --template=synapse-livekit.service
-    ynh_config_add_systemd --service="$app"-lk-jwt --template=synapse-lk-jwt.service
+    ynh_config_add_systemd --service="$app"-livekit --template=$app-livekit.service
+    ynh_config_add_systemd --service="$app"-lk-jwt --template=$app-lk-jwt.service
 fi
 
 #=================================================

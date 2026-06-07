@@ -56,8 +56,8 @@ if [ $calls_enabled -eq 1 ]; then
 
     # Setup services and config files
     get_lk_node_ip
-    ynh_config_add_systemd --service="$app"-livekit --template=synapse-livekit.service
-    ynh_config_add_systemd --service="$app"-lk-jwt --template=synapse-lk-jwt.service
+    ynh_config_add_systemd --service="$app"-livekit --template=$app-livekit.service
+    ynh_config_add_systemd --service="$app"-lk-jwt --template=$app-lk-jwt.service
 
     ynh_config_add --template=livekit.yml --destination=/etc/matrix-"$app"/livekit.yml
     ynh_config_add --template=lk-jwt.conf --destination=/etc/matrix-"$app"/lk-jwt.conf
