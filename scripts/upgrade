@@ -3,12 +3,20 @@
 source _common.sh
 source /usr/share/yunohost/helpers
 
+# If unset, set $calls_enabled as false (0)
+ynh_app_setting_set_default --app="$app" --key=calls_enabled --value=0
+
 #=================================================
 # STOP SYSTEMD SERVICE
 #=================================================
 ynh_script_progression "Stopping $app's systemd service..."
 
 ynh_systemctl --service=$app --action="stop" --log_path="systemd"
+
+if [ $calls_enabled -eq 1 ]; then
+    ynh_systemctl --service="$app"-livekit.service --action=stop
+    ynh_systemctl --service="$app"-lk-jwt.service --action=stop
+fi
 
 #=================================================
 # FETCH VARIABLES FOR CONFIG
@@ -27,6 +35,19 @@ ynh_setup_source --dest_dir="$install_dir" --keep="tuwunel.toml"
 chown -R $app:root "$install_dir"
 chmod +x "$install_dir/tuwunel"
 
+if [ $calls_enabled -eq 1 ]; then
+    ynh_app_setting_set_default --key=livekit_secret --value="$(ynh_string_random --length=40)"
+
+    # Install livekit jwt
+    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk_jwt"
+
+    chmod +x "$install_dir/lk-jwt-service"
+    chown "$app" -R "$install_dir"
+
+    # Install livekit server for element-call
+    ynh_setup_source --source_id=livekit --dest_dir="$install_dir/livekit"
+fi
+
 #=================================================
 # REAPPLY SYSTEM CONFIGURATIONS
 #=================================================
@@ -37,12 +58,26 @@ ynh_config_add_nginx
 # Create .well-known redirection for access by federation
 if yunohost --output-as plain domain list | grep -q "^$server_name$"
 then
-    ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+    if [ $calls_enabled -eq 1 ]; then
+        ynh_config_add --template="server_name_livekit.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+        ynh_config_add --template="nginx_livekit.conf" --destination="/etc/nginx/conf.d/${domain}.d/${app}_livekit.conf"
+    else
+        ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+    fi
 fi
 
 ynh_config_add_systemd
 
 yunohost service add $app --description="Chat server powered by Matrix" --log="/var/log/$app/$app.log"
+
+if [ $calls_enabled -eq 1 ]; then
+    yunohost service add "$app"-livekit --description 'Livekit server for element call.'
+    yunohost service add "$app"-lk-jwt --description 'RTC Livekit JWT service for element call.'
+
+    get_lk_node_ip
+    ynh_config_add_systemd --service="$app"-livekit --template=synapse-livekit.service
+    ynh_config_add_systemd --service="$app"-lk-jwt --template=synapse-lk-jwt.service
+fi
 
 #=================================================
 # UPDATE A CONFIG FILE
@@ -50,6 +85,11 @@ yunohost service add $app --description="Chat server powered by Matrix" --log="/
 ynh_script_progression "Updating configuration..."
 
 ynh_config_add --template="tuwunel.toml" --destination="$install_dir/tuwunel.toml"
+
+if [ $calls_enabled -eq 1 ]; then
+    ynh_config_add --template=livekit.yml --destination=/etc/matrix-"$app"/livekit.yml
+    ynh_config_add --template=lk-jwt.conf --destination=/etc/matrix-"$app"/lk-jwt.conf
+fi
 
 chmod 400 "$install_dir/tuwunel.toml"
 chown $app:$app "$install_dir/tuwunel.toml"
@@ -60,6 +100,11 @@ chown $app:$app "$install_dir/tuwunel.toml"
 ynh_script_progression "Starting $app's systemd service..."
 
 ynh_systemctl --service=$app --action="start" --log_path="systemd"
+
+if [ $calls_enabled -eq 1 ]; then
+    ynh_systemctl --service="$app"-livekit.service --action=restart
+    ynh_systemctl --service="$app"-lk-jwt.service --action=restart
+fi
 
 #=================================================
 # END OF SCRIPT

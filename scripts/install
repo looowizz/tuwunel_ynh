@@ -27,15 +27,47 @@ chmod +x "$install_dir/tuwunel"
 # INSTALL COTURN IF NOT INSTALLED
 #=================================================
 # Credit to: https://github.com/YunoHost-Apps/prosody_ynh/blob/testing/scripts/install#L15C1-L22C79
-if ! yunohost app list | grep -q "id: coturn"; then
-        echo "Coturn is not installed. Installing... "
-        yunohost tools update
-        yunohost app install coturn --force --args "domain=$domain"
+if [ $calls_enabled -eq 1 ]; then
+    if ! yunohost app list | grep -q "id: coturn"; then
+            echo "Coturn is not installed. Installing... "
+            yunohost tools update
+            yunohost app install coturn --force --args "domain=$domain"
+    fi
+
+    turn_password=$(ynh_app_setting_get --app="coturn" --key=turnserver_pwd)
+    turn_external_port=$(ynh_app_setting_get --app="coturn" --key=port_turnserver_tls)
+    turn_domain=$(ynh_app_setting_get --app="coturn" --key="domain")
 fi
 
-turn_password=$(ynh_app_setting_get --app="coturn" --key=turnserver_pwd)
-turn_external_port=$(ynh_app_setting_get --app="coturn" --key=port_turnserver_tls)
-turn_domain=$(ynh_app_setting_get --app="coturn" --key="domain")
+#=================================================
+# SETUP LIVEKIT FOR CALLS
+#=================================================
+if [ $calls_enabled -eq 1 ]; then
+    ynh_app_setting_set_default --key=livekit_secret --value="$(ynh_string_random --length=40)"
+
+    # Install livekit jwt
+    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk_jwt"
+
+    chmod +x "$install_dir/lk-jwt-service"
+    chown "$app" -R "$install_dir"
+
+    # Install livekit server for element-call
+    ynh_setup_source --source_id=livekit --dest_dir="$install_dir/livekit"
+
+    # Setup services and config files
+    get_lk_node_ip
+    ynh_config_add_systemd --service="$app"-livekit --template=synapse-livekit.service
+    ynh_config_add_systemd --service="$app"-lk-jwt --template=synapse-lk-jwt.service
+
+    ynh_config_add --template=livekit.yml --destination=/etc/matrix-"$app"/livekit.yml
+    ynh_config_add --template=lk-jwt.conf --destination=/etc/matrix-"$app"/lk-jwt.conf
+
+    yunohost service add "$app"-livekit --description 'Livekit server for element call.'
+    yunohost service add "$app"-lk-jwt --description 'RTC Livekit JWT service for element call.'
+
+    ynh_systemctl --service="$app"-livekit.service --action="start"
+    ynh_systemctl --service="$app"-lk-jwt.service --action="start"
+fi
 
 #=================================================
 # SYSTEM CONFIGURATION
@@ -45,7 +77,12 @@ ynh_script_progression "Adding system configurations related to $app..."
 # Create .well-known redirection for access by federation
 if yunohost --output-as plain domain list | grep -q "^$server_name$"
 then
-    ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+    if [ $calls_enabled -eq 1 ]; then
+        ynh_config_add --template="server_name_livekit.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+        ynh_config_add --template="nginx_livekit.conf" --destination="/etc/nginx/conf.d/${domain}.d/${app}_livekit.conf"
+    else
+        ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
+    fi
 fi
 
 ynh_config_add_nginx
