@@ -51,6 +51,10 @@ if [ $calls_enabled -eq 1 ]; then
     turn_password=$(ynh_app_setting_get --app="coturn" --key=turnserver_pwd)
     turn_external_port=$(ynh_app_setting_get --app="coturn" --key=port_turnserver_tls)
     turn_domain=$(ynh_app_setting_get --app="coturn" --key="domain")
+else
+    turn_password=""
+    turn_external_port=""
+    turn_domain=""
 fi
 
 #=================================================
