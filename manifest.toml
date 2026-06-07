@@ -72,7 +72,7 @@ ram.runtime = "50M"
     [resources.sources]
 
         [resources.sources.lk_jwt]
-        prefetch = true
+        prefetch = false
         extract = false
         rename = "lk-jwt-service"
 
@@ -82,7 +82,7 @@ ram.runtime = "50M"
         arm64.sha256 = "ed0ba3be3fb6bd3fcf8ece8d835a5b7c0a7f8bc89fe562002b843b73c4e7914c"
 
         [resources.sources.livekit]
-        prefetch = true
+        prefetch = false
         extract = true
         in_subdir = false
 
