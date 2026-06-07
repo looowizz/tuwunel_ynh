@@ -67,8 +67,6 @@ fi
 #=================================================
 ynh_script_progression "Upgrading system configurations related to $app..."
 
-ynh_config_add_nginx
-
 # Create .well-known redirection for access by federation
 if yunohost --output-as plain domain list | grep -q "^$server_name$"
 then
@@ -83,6 +81,8 @@ then
         ynh_config_add --template="server_name.conf" --destination="/etc/nginx/conf.d/${server_name}.d/${app}_server_name.conf"
     fi
 fi
+
+ynh_config_add_nginx
 
 ynh_config_add_systemd
 
