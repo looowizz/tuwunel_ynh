@@ -46,7 +46,7 @@ if [ $calls_enabled -eq 1 ]; then
     ynh_app_setting_set_default --key=livekit_secret --value="$(ynh_string_random --length=40)"
 
     # Install livekit jwt
-    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk_jwt"
+    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk-jwt-service"
 
     chmod +x "$install_dir/lk-jwt-service"
     chown "$app" -R "$install_dir"
