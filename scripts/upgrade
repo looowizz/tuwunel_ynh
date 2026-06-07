@@ -71,12 +71,12 @@ ynh_config_add_systemd
 yunohost service add $app --description="Chat server powered by Matrix" --log="/var/log/$app/$app.log"
 
 if [ $calls_enabled -eq 1 ]; then
-    yunohost service add "$app"-livekit --description 'Livekit server for element call.'
-    yunohost service add "$app"-lk-jwt --description 'RTC Livekit JWT service for element call.'
-
     get_lk_node_ip
     ynh_config_add_systemd --service="$app"-livekit --template=$app-livekit.service
     ynh_config_add_systemd --service="$app"-lk-jwt --template=$app-lk-jwt.service
+
+    yunohost service add "$app"-livekit --description 'Livekit server for element call.'
+    yunohost service add "$app"-lk-jwt --description 'RTC Livekit JWT service for element call.'
 fi
 
 #=================================================
