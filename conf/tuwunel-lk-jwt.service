@@ -7,7 +7,7 @@ Type=simple
 User=__APP__
 Group=__APP__
 WorkingDirectory=__INSTALL_DIR__/lk_jwt
-EnvironmentFile=lk-jwt.conf
+EnvironmentFile=__INSTALL_DIR__/lk_jwt/lk-jwt.conf
 ExecStart=__INSTALL_DIR__/lk_jwt/lk-jwt-service
 
 ### Depending on specificities of your service/app, you may need to tweak these
