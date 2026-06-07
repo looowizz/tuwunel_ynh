@@ -3,8 +3,11 @@
 source _common.sh
 source /usr/share/yunohost/helpers
 
-# If unset, set $calls_enabled as false (0)
+#=================================================
+# SET DEFAULT VALUES
+#=================================================
 ynh_app_setting_set_default --app="$app" --key=calls_enabled --value=0
+ynh_app_setting_set_default --app="$app" --key=jitsi_server --value="jitsi.riot.im"
 
 #=================================================
 # STOP SYSTEMD SERVICE
