@@ -39,9 +39,9 @@ if [ $calls_enabled -eq 1 ]; then
     ynh_app_setting_set_default --key=livekit_secret --value="$(ynh_string_random --length=40)"
 
     # Install livekit jwt
-    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk-jwt-service"
+    ynh_setup_source --source_id=lk_jwt --dest_dir="$install_dir/lk_jwt"
 
-    chmod +x "$install_dir/lk-jwt-service"
+    chmod +x "$install_dir/lk_jwt/lk-jwt-service"
     chown "$app" -R "$install_dir"
 
     # Install livekit server for element-call
@@ -88,7 +88,7 @@ ynh_script_progression "Updating configuration..."
 
 if [ $calls_enabled -eq 1 ]; then
     ynh_config_add --template=livekit.yml --destination=$install_dir/livekit/livekit.yml
-    ynh_config_add --template=lk-jwt.conf --destination=$install_dir/lk-jwt.conf
+    ynh_config_add --template=lk-jwt.conf --destination=$install_dir/lk_jwt/lk-jwt.conf
 fi
 
 chmod 400 "$install_dir/tuwunel.toml"
