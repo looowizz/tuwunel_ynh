@@ -105,7 +105,7 @@ fi
 #=================================================
 ynh_script_progression "Updating configuration..."
 
-#ynh_config_add --template="tuwunel.toml" --destination="$install_dir/tuwunel.toml"
+ynh_config_add --template="tuwunel.toml" --destination="$install_dir/tuwunel.toml"
 
 if [ $calls_enabled -eq 1 ]; then
     ynh_config_add --template=livekit.yml --destination=$install_dir/livekit/livekit.yml
